@@ -17,3 +17,5 @@ seeds:
 models:
   university_workshop:
     +static_analysis: strict
+    marts:
+      +materialized: table

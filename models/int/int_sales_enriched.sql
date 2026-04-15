@@ -1,9 +1,7 @@
 with items as (
 
     select
-        item_id,
-        order_id,
-        sku
+        *
     from {{ ref('stg_jaffle_shop__raw_items') }}
 
 ),
@@ -11,14 +9,7 @@ with items as (
 orders as (
 
     select
-        order_id,
-        customer_id,
-        store_id,
-        ordered_at,
-        order_date,
-        order_subtotal,
-        order_tax_paid,
-        order_total
+        *
     from {{ ref('stg_jaffle_shop__raw_orders') }}
 
 ),
@@ -26,34 +17,23 @@ orders as (
 products as (
 
     select
-        sku,
-        product_name,
-        product_type,
-        product_price,
-        product_description
+        *
     from {{ ref('stg_jaffle_shop__raw_products') }}
 
 ),
 
-supplies as (
+sku_costs as (
 
     select
-        sku,
-        supply_id,
-        supply_name,
-        supply_cost,
-        is_perishable
-    from {{ ref('stg_jaffle_shop__raw_supplies') }}
+        *
+    from {{ ref('int_supply_costs_by_sku') }}
 
 ),
 
 stores as (
 
     select
-        store_id,
-        store_name,
-        opened_at,
-        tax_rate
+        *
     from {{ ref('stg_jaffle_shop__raw_stores') }}
 
 ),
@@ -79,25 +59,24 @@ joined as (
         s.opened_at as store_opened_at,
         s.tax_rate,
         --cost basis / supply attributes
-        sup.supply_id,
-        sup.supply_name,
-        sup.is_perishable,
+        c.supply_count,
+        c.is_perishable,
         --unit economics
         cast(1 as int64) as units_sold,
-        cast(p.product_price as numeric) as unit_revenue,
-        cast(sup.supply_cost as numeric) as unit_cost,
-        cast(p.product_price as numeric) - cast(sup.supply_cost as numeric) as unit_margin,
+        p.product_price as unit_revenue,
+        c.unit_cost as unit_cost,
+        p.product_price - c.unit_cost as unit_margin,
         safe_divide(
-            cast(p.product_price as numeric) - cast(sup.supply_cost as numeric),
-            nullif(cast(p.product_price as numeric), 0)
+            p.product_price - c.unit_cost,
+            nullif(p.product_price, 0)
         ) as unit_margin_pct
     from items i
     join orders o
         on i.order_id = o.order_id
     left join products p
         on i.sku = p.sku
-    left join supplies sup
-        on i.sku = sup.sku
+    left join sku_costs c
+        on i.sku = c.sku
     left join stores s
         on o.store_id = s.store_id
 
