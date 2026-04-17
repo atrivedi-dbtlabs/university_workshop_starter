@@ -78,6 +78,8 @@ SAFE_CAST(price AS NUMERIC) AS price,
 TIMESTAMP(ordered_at) AS ordered_at
 ```
 
+To guide you through the staging layer build, you can follow [these instructions](https://docs.google.com/document/d/1Gy0f35WMmFM0Sh8kWpfQ1nSeFnmhWrFatISbTA3B534/edit?usp=sharing).
+
 #### Intermediate (`models/intermediate/`)
 
 Reusable joins / business logic:
